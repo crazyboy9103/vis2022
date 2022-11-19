@@ -36,7 +36,7 @@ if not sectors:
     st.error('업종을 선택하세요', icon="🚨")  ## 업종 선택 안될 경우 에러 메시지 출력 
 else:
     # Interaction
-    df = dummy[(dummy['업종']==sectors) & (dummy['적합도'] <= job_idx)] 
+    df = dummy[(dummy['업종']==sectors) & (dummy['적합도'] >= job_idx)] 
 
     # Set viewport for the deckgl map
     view = pdk.ViewState(latitude=37.584009, longitude=126.970626, zoom=3,)
