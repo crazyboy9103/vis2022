@@ -8,7 +8,7 @@ from utils import *
 
 
 # Data processing 
-latlon = pd.read_csv('Seoul_latlong.csv', encoding='cp949')  ## 서울 위경도 데이터
+latlon = pd.read_csv('data/Seoul_latlong_utf8.csv', encoding='cp949')  ## 서울 위경도 데이터
 latlon = latlon[['위도','경도']]
 
 dummy = pd.DataFrame({'count': 10, 'lat':[latlon['위도'][0]], 'lon':[latlon['경도'][0]], '업종':'제조업',

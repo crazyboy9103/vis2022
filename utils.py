@@ -32,7 +32,7 @@ def cloud(text, max_word=10, max_font=20, random=5):
     # 'put', 'seem', 'asked', 'made', 'half', 'much',
     # 'certainly', 'might', 'came'])
     
-    wc = WordCloud(font_path = 'C:/WINDOWS/FONTS/HMKMRHD.ttf', background_color="white", max_words=30, width=400, height=200,
+    wc = WordCloud(font_path = 'C:/WINDOWS/FONTS/HMKMRHD.ttf', background_color="white", max_words=max_word, width=400, height=200,
     stopwords=stopwords, max_font_size=20, random_state=5)
     cloud = wc.generate_from_frequencies(data) 
     # generate word cloud
