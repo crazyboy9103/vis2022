@@ -81,7 +81,6 @@ for col in ['세부직무','경력','학력','전공','스킬셋','복지']:
 wanted_df_modified['적합도'] = wanted_df_modified.iloc[:, 1:].sum(axis = 1)
 
 ### Clustering 
-
 wanted_df_modified['cluster'] = 0
 cluster_data = []
 
