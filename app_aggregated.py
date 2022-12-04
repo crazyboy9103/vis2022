@@ -139,10 +139,3 @@ with st.container():
                         st_data = st_folium(m, width=725)
                 with detail_view:
                     st.write('detail view')
-
-class 공고:
-    def __init__(self, 직무, 스택, 경력, 기업태그):
-        self.직무 = 직무
-        self.스택 = 스택
-        self.경력 = 경력
-        self.기업태그 = 기업태그
