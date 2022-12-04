@@ -1,11 +1,15 @@
 from plotly.offline import plot
 import plotly.graph_objects as go
+from streamlit_plotly_events import plotly_events
+
 import seaborn as sns
 from pprint import pprint as pp
 import circlify as circ
 from collections import defaultdict
 import math
-
+import numpy as np
+import logging
+import sys
 class BubbleMaker:
   palette = sns.color_palette("GnBu_d",10).as_hex()
   default_bubble_kwargs = {'type': 'circle', 'xref': 'x', 'yref': 'y' }
@@ -50,11 +54,12 @@ class BubbleMaker:
       sc_bubble_data['children'] = children
       sc_bubble_data['datum'] = sum([child['datum'] for child in children])
       bubble_data.append(sc_bubble_data)
+      logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
       bubbles = circ.circlify(bubble_data, show_enclosure=False)
     return bubbles
   
   #draw packed bubble chart as plotly fig
-  def plot_bubbles(self, bubbles, padding=None, fig=None):
+  def plot_bubbles(self, bubbles, padding=None, fig=None, fn=None):
     
     if fig:
       self.fig = fig
@@ -64,6 +69,7 @@ class BubbleMaker:
     else:
       pass
 
+    map_dict = dict()
 
     min_x = min([circle.x-circle.r for circle in bubbles])
     max_x = max([circle.x+circle.r for circle in bubbles])
@@ -83,21 +89,45 @@ class BubbleMaker:
     if padding:
       self.padding = padding
 
-    # print(bubbles)
-    
-    points = [go.layout.Shape(x0=circle.x-(circle.r-self.padding)+min_x,
-                          y0=circle.y-(circle.r-self.padding), 
-                          x1=circle.x+(circle.r-self.padding)+min_x, 
-                          y1=circle.y+(circle.r-self.padding), 
-                          fillcolor=circle.ex['color'], 
-                          line_color=circle.ex['color'],
-                          **self.default_bubble_kwargs) for idx, circle in enumerate(bubbles) if circle.level==2]
+ 
+    i=0
+    for _, circle in enumerate(bubbles):
+      if circle.level == 2:
+        self.fig.add_shape(type="circle",
+          xref="x", yref="y",
+          x0=circle.x-(circle.r-self.padding)+min_x,
+          y0=circle.y-(circle.r-self.padding), 
+          x1=circle.x+(circle.r-self.padding)+min_x, 
+          y1=circle.y+(circle.r-self.padding), 
+          opacity=1,
+          fillcolor=circle.ex['color'], 
+          line_color=circle.ex['color'])
 
-    self.fig.update_layout(shapes=points)
-    
+        t = np.arange(0, 2 * np.pi, 0.01)
+        x = (circle.r - self.padding) * np.cos(t) + circle.x+ min_x
+        y = (circle.r - self.padding) * np.sin(t) + circle.y
+        scatter = go.Scatter (
+            x=x.tolist(),
+            y=y.tolist(),
+            fill='toself',
+            mode='lines',
+            name=f'{i}',
+            text=f'{circle.ex["id"]}',
+            uid = int(circle.ex["id"].split('-')[1]),
+            ids = [circle.ex["id"] for _ in x],
+            # arrangement=circle.ex["id"],
+            # uid = circle.ex["id"],
+            opacity = 0,
+        )
+        map_dict[i] = circle.ex['id']
+        i += 1
+        self.fig.add_trace ( scatter)
+
     self.fig.update_xaxes(range=[0, width])
     self.fig.update_yaxes(range=[-height/2, height/2 ])
 
     self.fig.update_xaxes(visible=False)
     self.fig.update_yaxes(visible=False)
-    return self.fig
+    # print(selected_points)
+    return self.fig, map_dict
+
