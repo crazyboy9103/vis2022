@@ -145,6 +145,8 @@ with st.container():
                     df_with_score = Overview(df, my_info, weights)                   
 
                     ### Draw circles 
+                    cluster_data = Overview.cluster_data
+                    
                     makers = BubbleMaker()
                     bubbles = makers.gen_bubble(cluster_data)
                     fig = makers.plot_bubbles(bubbles)
