@@ -163,29 +163,24 @@ with st.container():
                     
                     st.session_state['data_cluster'] = data_cluster
 
-                    
-                    
                     # 클러스터 직무적합도 기준별 점수 * 10
-                    
                     c = list(data_cluster[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
-
-                    #전체 직무적합도 기준별 점수
-
-                    
+                    c = list(map(lambda x: min(10, x), c))
+                    #전체 직무적합도 기준별 점수          
                     o = list(df_with_score[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
-
+                    o = list(map(lambda x: min(10, x), o))
                     fig = go.Figure()
 
                     fig.add_trace(go.Scatterpolar(
-                        r=c,
-                        theta=categories,
+                        r=c + [c[0]],
+                        theta=categories + [categories[0]],
                         fill='toself',
                         name='클러스터',
                         hovertemplate = '<i>기준명</i>: %{theta}<br><i>적합도</i>: %{r}<br>'
                     ))
                     fig.add_trace(go.Scatterpolar(
-                        r=o,
-                        theta=categories,
+                        r=o + [o[0]],
+                        theta=categories + [categories[0]],
                         fill='toself',
                         name='전체',
                         hovertemplate = '<i>기준명</i>: %{theta}<br><i>적합도</i>: %{r}<br>'
@@ -202,7 +197,6 @@ with st.container():
                         height=400,
                         margin=dict(l=40, r=60, b=40, t=0)
                     )
-
                     st.plotly_chart(fig)
                 else:
                     data_cluster = df_with_score
@@ -223,11 +217,10 @@ with st.container():
                             range=[0, 10]
                         )),
                         showlegend=False,
-                        width=1200,
+                        width=800,
                         height=400,
-                        margin=dict(l=20, r=20, b=20, t=20)
+                        margin=dict(l=40, r=60, b=40, t=0)
                     )
-
                     st.plotly_chart(fig)
 
             with col3:
@@ -253,19 +246,19 @@ with st.container():
                 elif kw_cat == '업종':
                     return_obj = wordcloud.visualize(i_words, tooltip_data_fields={
                         'text':'업종', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 800, height = 500, key="업종")
+                    }, per_word_coloring=False, width = 400, height = 350, key="업종", max_words= 25)
                 
                 # No tag
                 elif kw_cat == '기술스택':
                     return_obj = wordcloud.visualize(s_words, tooltip_data_fields={
                         'text':'기술스택 종류', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 800, height = 500, key="기술스택")
+                    }, per_word_coloring=False, width = 400, height = 350, key="기술스택", max_words= 25)
 
                 # Tag
                 else: 
                     return_obj = wordcloud.visualize(c_words, tooltip_data_fields={
                         'text':'기업 이미지 및 규모', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 700, height = 400, key="기업정보")
+                    }, per_word_coloring=False, width = 400, height = 350, key="기업정보", max_words= 25)
                 
                 if return_obj != None and return_obj['clicked'] != None:
                     tag = return_obj['clicked']['text']
