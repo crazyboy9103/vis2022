@@ -60,7 +60,7 @@ dependencies:
     - matplotlib==3.6.2
     - matplotlib-inline==0.1.6
     - nest-asyncio==1.5.6
-    - numpy==1.23.5
+    - numpy==1.20.3
     - packaging==21.3
     - pandas==1.5.1
     - parso==0.8.3
@@ -104,4 +104,4 @@ dependencies:
     - widgetsnbextension==4.0.3
     - wordcloud==1.8.2.2
     - zipp==3.10.0
-prefix: H:\anaconda3\envs\viz
+prefix: C:\Users\david\miniconda3\envs\viz

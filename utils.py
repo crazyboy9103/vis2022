@@ -19,21 +19,24 @@ def cal_index(df, mine, col):
 # https://medium.com/analytics-vidhya/text-summarization-using-a-wordcloud-deployed-on-streamlit-cbce2f411c24
 # https://blog.naver.com/PostView.nhn?blogId=vi_football&logNo=221775297963&parentCategoryNo=&categoryNo=1&viewDate=&isShowPopularPosts=true&from=search
 
-def cloud(text, max_word=10, max_font=20, random=5):
-    okt = Okt()
-    noun = okt.nouns(text)
-    count = Counter(noun).most_common()  # 카운트 후 빈도순 정렬
+def word_count(cluster_df, col_name):
+    if col_name == '업종':
+        cluster_col = []
+        for sub_cat in cluster_df[col_name]:
+            cluster_col.append(sub_cat)
+    else:
+        cluster_col = []
+        for sub_cat in cluster_df[col_name]:
+            cluster_col.extend(list(sub_cat))
+            
+    count = Counter(cluster_col).most_common()  # 카운트 후 빈도순 정렬
     count = pd.DataFrame(count)       # df형태로 만들기
     count.columns = ['word','count'] 
-    data = dict(zip(count['word'].tolist(), count['count'].tolist()))
-    stopwords = set(STOPWORDS)
-    # stopwords.update(['us', 'one', 'will', 'said', 'now', 'well', 'man', 'may',
-    # 'little', 'say', 'must', 'way', 'long', 'yet', 'mean',
-    # 'put', 'seem', 'asked', 'made', 'half', 'much',
-    # 'certainly', 'might', 'came'])
     
-    wc = WordCloud(font_path = 'C:/WINDOWS/FONTS/HMKMRHD.ttf', background_color="white", max_words=max_word, width=400, height=200,
-    stopwords=stopwords, max_font_size=20, random_state=5)
-    cloud = wc.generate_from_frequencies(data) 
-    # generate word cloud
-    return cloud
+    words = []
+    for i in range(len(count)):
+        word = dict()
+        word['text'] = count.iloc[i]['word']
+        word['value'] = int(count.iloc[i]['count'])
+        words.append(word)
+    return words
