@@ -111,59 +111,84 @@ with st.container():
             가중치_복지 = st.slider('복지 가중치', min_value=1, max_value=10, \
                         value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
 
+        
+
+        
 
         submitted = st.form_submit_button("Search🔎")
 
-        if submitted:
-            with st.container():
-                print('submitted')
-                print(submitted)
 
-                my_bar = st.progress(1)
-                for percent_complete in range(100):
-                    time.sleep(0.1)
-                    my_bar.progress(percent_complete + 1)
+    if submitted:
+        my_info =  {'경력':경력, 
+                    '학력':학력, 
+                    '전공':전공 + ['무관'], 
+                    '스킬셋':스킬셋, 
+                    '복지':복지,
+                    '세부직무': 세부직무}
 
-                # success = st.success('100 jobs are waiting for you!', icon="😝")
+        weights = {'경력_score':가중치_경력, 
+                    '학력_score':가중치_학력, 
+                    '전공_score':가중치_전공, 
+                    '스킬셋_score':가중치_스킬셋, 
+                    '복지_score':가중치_복지,
+                    '세부직무_score': 가중치_세부직무}
+        overview = Overview(df, my_info, weights) 
 
-                # 입력 정보 반영
-                my_info =  {'경력':경력, 
-                            '학력':학력, 
-                            '전공':전공 + ['무관'], 
-                            '스킬셋':스킬셋, 
-                            '복지':복지,
-                            '세부직무': 세부직무}
+        st.session_state['overview_my_info'] = my_info
+        st.session_state['overview_weights'] = weights
+        st.session_state['overview_obj'] = overview
+        
 
-                weights = {'경력_score':가중치_경력, 
-                            '학력_score':가중치_학력, 
-                            '전공_score':가중치_전공, 
-                            '스킬셋_score':가중치_스킬셋, 
-                            '복지_score':가중치_복지,
-                            '세부직무_score': 가중치_세부직무}
+    
+    if 'overview_obj' in st.session_state:
+        with st.container():
+            # my_info = st.session_state['overview_my_info']
+            # weights = st.session_state['overview_weights']
 
-                overview, detail_view = st.columns(2)
+            # overview = Overview(df, my_info, weights) 
+            overview = st.session_state['overview_obj']
+            df_with_score = overview.df                  
 
-                with overview:
-                    
-                    # Calculate Fit score 
-                    overview = Overview(df, my_info, weights)   
-                    df_with_score = overview.df                  
+            ### Draw circles 
+            cluster_data = overview.cluster_data
+            overview_view, detail_view = st.columns(2)
 
-                    ### Draw circles 
-                    cluster_data = overview.cluster_data
-                    
-                    makers = BubbleMaker()
-                    bubbles = makers.gen_bubble(cluster_data)
-                    fig, map_dict = makers.plot_bubbles(bubbles)
+            with overview_view:
+                makers = BubbleMaker()
+                bubbles = makers.gen_bubble(cluster_data)
+                fig, map_dict = makers.plot_bubbles(bubbles)
+                points = plotly_events(fig, )
+                if points:
+                    print('asdfsafds', points)
+                    idx = points[0]['curveNumber']
+                    points[0]['cid'] = map_dict[idx]
 
-                    # fig.show()
-                    points = plotly_events(fig, )
-                    if points:
-                        idx = points[0]['curveNumber']
-                        points[0]['cid'] = map_dict[idx]
-                   
-                with detail_view:
-                    st.write('detail view')
+            with detail_view:
+                st.write('detail view')
+
+
+    # if submitted:
+    #     print('submitted')
+    #     print(submitted)
+
+    #     my_bar = st.progress(1)
+    #     for percent_complete in range(100):
+    #         time.sleep(0.1)
+    #         my_bar.progress(percent_complete + 1)
+
+        # success = st.success('100 jobs are waiting for you!', icon="😝")
+
+    # 입력 정보 반영
+    
+
+
+        
+        
+        
+        
+
+
+
 
 class 공고:
     def __init__(self, 직무, 스택, 경력, 기업태그):
