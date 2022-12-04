@@ -163,6 +163,7 @@ with st.container():
                     data_cluster = df_with_score.loc[df_with_score['id'].isin(data_cluster_member)]
                     
                     st.session_state['data_cluster'] = data_cluster
+                    st.session_state['cluster_member'] = data_cluster_member
 
                     # 클러스터 직무적합도 기준별 점수 * 10
                     c = list(data_cluster[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
@@ -261,13 +262,13 @@ with st.container():
                         'text':'기업 이미지 및 규모', 'value':'관련 공고 수'
                     }, per_word_coloring=False, width = 400, height = 350, key="기업정보", max_words= 25)
                 
-                if return_obj != None and return_obj['clicked'] != None:
-                    tag = return_obj['clicked']['text']
-                    if tag in st.session_state['keywords']:
-                        st.session_state['keywords'].remove(tag)
+                if return_obj != None:
+                    if return_obj['clicked'] != None and return_obj['hovered'] != None:
+                        tag = return_obj['clicked']['text']
+                        if return_obj["clicked"]['text'] == return_obj["hovered"]['text']:
+                            st.session_state['keywords'].add(tag)                   
+
                 
-                    else:
-                        st.session_state['keywords'].add(tag)
 
                 md = ""
                 for keyword in st.session_state['keywords']:
@@ -288,78 +289,148 @@ with st.container():
             '''
             json_paths = glob.glob("./data/job_posting/json/*.json")
             keywords = st.session_state['keywords']
-
-            for idx, path in enumerate(json_paths):
-                data = json.load(open(path, "r"))
-                tags = data.get("tags", [])
-                tags = set(map(lambda tag: tag.split("#")[1], tags))
-                
-
-                기술스택 = set(data.get("tools", []))
-                업종 = data.get("industry", None)
-
-                inter = tags & keywords
-                inter1 = 기술스택 & keywords
-                if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
-                    name = data["company_name"]
-                    thumb_img = data["title_thumb_img"]
-                    main_tasks = data["main_tasks"]
-                    is_newbie = data["is_newbie"]
-                    location = data["location"]
-                    req = data["requirements"]
+            if 'cluster_member' in st.session_state:
+                for idx, cid in enumerate(st.session_state['cluster_member']):
+                    path = f'./data/job_posting/json/{cid}.json'
+                    data = json.load(open(path, "r"))
+                    tags = data.get("tags", [])
+                    tags = set(map(lambda tag: tag.split("#")[1], tags))
                     
-                    sub_categories = data["sub_categories"]
 
-                    tasks_html = ''
-                    for task in main_tasks.split("\n"):
-                        if len(task.strip()) == 0:
-                            continue       
-                        tasks_html = tasks_html + f'<p>{task}</p>'
+                    기술스택 = set(data.get("tools", []))
+                    업종 = data.get("industry", None)
 
-                    req_html = ''
-                    for r in req.split("\n"):
-                        if len(r.strip()) == 0:
-                            continue
-                        req_html = req_html + f'<p>{r}</p>'
+                    inter = tags & keywords
+                    inter1 = 기술스택 & keywords
+                    if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
+                        name = data["company_name"]
+                        thumb_img = data["title_thumb_img"]
+                        main_tasks = data["main_tasks"]
+                        is_newbie = data["is_newbie"]
+                        location = data["location"]
+                        req = data["requirements"]
+                        
+                        sub_categories = data["sub_categories"]
 
-                    content_html = f'''
-                    <div style="display: flex; margin: 10px 10px 10px 10px;">
-                        <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
-                        <div style="margin-left: 20px;">
-                            <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
-                            {tasks_html}
-                            <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
-                            {req_html}
+                        tasks_html = ''
+                        for task in main_tasks.split("\n"):
+                            if len(task.strip()) == 0:
+                                continue       
+                            tasks_html = tasks_html + f'<p>{task}</p>'
+
+                        req_html = ''
+                        for r in req.split("\n"):
+                            if len(r.strip()) == 0:
+                                continue
+                            req_html = req_html + f'<p>{r}</p>'
+
+                        content_html = f'''
+                        <div style="display: flex; margin: 10px 10px 10px 10px;">
+                            <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
+                            <div style="margin-left: 20px;">
+                                <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
+                                {tasks_html}
+                                <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
+                                {req_html}
+                            </div>
                         </div>
-                    </div>
-                    '''
-                
-                    full_comp_html += f'''
-                    <div id="accordion">
-                        <div class="card">
-                        <div style="display:flex;" class="card-header" id="headingOne">
-                            <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
-                            <div>
-                            <div style="margin: 0 0 0 20px;">
-                                <div style="display: flex;">
-                                <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
-                                <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
-                                    자세히 보기
-                                </button>
+                        '''
+                    
+                        full_comp_html += f'''
+                        <div id="accordion">
+                            <div class="card">
+                            <div style="display:flex;" class="card-header" id="headingOne">
+                                <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
+                                <div>
+                                <div style="margin: 0 0 0 20px;">
+                                    <div style="display: flex;">
+                                    <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
+                                    <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
+                                        자세히 보기
+                                    </button>
+                                    </div>
+                                    <p>{",".join(sub_categories)}</p> 
+                                    <p>{' '.join(data.get("tags", []))}</p>
                                 </div>
-                                <p>{",".join(sub_categories)}</p> 
-                                <p>{' '.join(data.get("tags", []))}</p>
+                                </div>
+                            </div>
+                            <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                                {content_html}
                             </div>
                             </div>
+                        </div>'''
+            else:
+                for idx, path in enumerate(json_paths):
+                    data = json.load(open(path, "r"))
+                    tags = data.get("tags", [])
+                    tags = set(map(lambda tag: tag.split("#")[1], tags))
+                    
+
+                    기술스택 = set(data.get("tools", []))
+                    업종 = data.get("industry", None)
+
+                    inter = tags & keywords
+                    inter1 = 기술스택 & keywords
+                    if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
+                        name = data["company_name"]
+                        thumb_img = data["title_thumb_img"]
+                        main_tasks = data["main_tasks"]
+                        is_newbie = data["is_newbie"]
+                        location = data["location"]
+                        req = data["requirements"]
+                        
+                        sub_categories = data["sub_categories"]
+
+                        tasks_html = ''
+                        for task in main_tasks.split("\n"):
+                            if len(task.strip()) == 0:
+                                continue       
+                            tasks_html = tasks_html + f'<p>{task}</p>'
+
+                        req_html = ''
+                        for r in req.split("\n"):
+                            if len(r.strip()) == 0:
+                                continue
+                            req_html = req_html + f'<p>{r}</p>'
+
+                        content_html = f'''
+                        <div style="display: flex; margin: 10px 10px 10px 10px;">
+                            <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
+                            <div style="margin-left: 20px;">
+                                <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
+                                {tasks_html}
+                                <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
+                                {req_html}
+                            </div>
                         </div>
-                        <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                            {content_html}
-                        </div>
-                        </div>
-                    </div>'''
+                        '''
+                    
+                        full_comp_html += f'''
+                        <div id="accordion">
+                            <div class="card">
+                            <div style="display:flex;" class="card-header" id="headingOne">
+                                <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
+                                <div>
+                                <div style="margin: 0 0 0 20px;">
+                                    <div style="display: flex;">
+                                    <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
+                                    <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
+                                        자세히 보기
+                                    </button>
+                                    </div>
+                                    <p>{",".join(sub_categories)}</p> 
+                                    <p>{' '.join(data.get("tags", []))}</p>
+                                </div>
+                                </div>
+                            </div>
+                            <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                                {content_html}
+                            </div>
+                            </div>
+                        </div>'''
 
             components.html(full_comp_html,
-                width=1560,
+                width=1400,
                 height=1200,
                 scrolling=True
             )
