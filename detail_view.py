@@ -111,34 +111,39 @@ with st.container():
     # plt.imshow(wc, interpolation='bilinear')
     # plt.axis("off")
     # st.pyplot(fig)
-    if kw_cat == '복지':
+    w_words = utils.word_count(data_cluster, "복지")
+    i_words = utils.word_count(data_cluster, "업종")
+    s_words = utils.word_count(data_cluster, "스킬셋")
+    c_words = utils.word_count(data_cluster, "기업정보")
 
-      words = utils.word_count(data_cluster, "복지")
-      return_obj = wordcloud.visualize(words, tooltip_data_fields={
+    if kw_cat == '복지':
+      
+      return_obj = wordcloud.visualize(w_words, tooltip_data_fields={
           'text':'복지 종류', 'value':'관련 공고 수'
       }, per_word_coloring=False, width = 800, height = 500)
-      
+      print(return_obj)
+
     elif kw_cat == '업종':
 
-      words = utils.word_count(data_cluster, "업종")
-      return_obj = wordcloud.visualize(words, tooltip_data_fields={
+      return_obj = wordcloud.visualize(i_words, tooltip_data_fields={
           'text':'기술스택 종류', 'value':'관련 공고 수'
       }, per_word_coloring=False, width = 800, height = 500)
 
-
+      print(return_obj)
+      
     elif kw_cat == '기술스택':
-
-      words = utils.word_count(data_cluster, "스킬셋")
-      return_obj = wordcloud.visualize(words, tooltip_data_fields={
+      
+      return_obj = wordcloud.visualize(s_words, tooltip_data_fields={
           'text':'기술스택 종류', 'value':'관련 공고 수'
       }, per_word_coloring=False, width = 800, height = 500)
+      print(return_obj)
 
     else:
-      words = utils.word_count(data_cluster, "기업정보")
-      return_obj = wordcloud.visualize(words, tooltip_data_fields={
+      
+      return_obj = wordcloud.visualize(c_words, tooltip_data_fields={
           'text':'기업 이미지 및 규모', 'value':'관련 공고 수'
       }, per_word_coloring=False, width = 700, height = 400)
-
+      print(return_obj)
 
 
 
