@@ -76,7 +76,7 @@ class BubbleMaker:
     
 
     fig_width = self.fig.layout.width
-    self.fig.update_layout(height=fig_width*height/width)
+    self.fig.update_layout(height=fig_width*height/width, margin=dict(l=10, r=10, b=10, t=10, pad=4))
 
     min_x = -min_x
     map_dict = dict()
@@ -129,4 +129,6 @@ class BubbleMaker:
 
     self.fig.update_xaxes(visible=False)
     self.fig.update_yaxes(visible=False)
+
+    self.fig.update_layout(showlegend=False)
     return self.fig, map_dict

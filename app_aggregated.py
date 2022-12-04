@@ -7,11 +7,15 @@ import numpy as np
 import pydeck as pdk
 from ipywidgets import HTML
 from IPython.display import display
+import utils
+import streamlit_wordcloud as wordcloud
+import glob,json
+import streamlit.components.v1 as components
 from utils import * 
 import folium
 from streamlit_folium import st_folium
 from streamlit_plotly_events import plotly_events
-
+import plotly.graph_objects as go
 import pickle
 
 from plot_packed_bbchart_ex import * 
@@ -40,31 +44,34 @@ with st.container():
 
     with st.form("my_form"):
         st.header("Search")
-        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
         with col1:
             세부직무 = st.multiselect(
                 "세부 직무",
-                # ("개발", "경영", "디자인", "마케팅", "영업", "리테일", "게임 제작", "HR", "미디어", "엔지니어링", "금융", "물류", "제조", "교육", "의료", "건설", "공공")
                 직무리스트
             )
-        
-        with col2:
-            # 경력 = st.selectbox(
-            #     "경력", 
-            #     ("인턴", "신입", "경력 (1년 이상)", "경력 (2년 이상)", "경력 (5년 이상)")
-            # )
-            경력 = st.number_input('경력 (신입은 0을 입력하세요)', 0, 100)
 
+            가중치_세부직무 = st.slider('직무 가중치', min_value=1, max_value=10, \
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
+            
+
+        with col2:
+            경력 = st.number_input('경력 (신입은 0을 입력하세요)', 0, 100)
+            가중치_경력 = st.slider('경력 가중치', min_value=1, max_value=10, \
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
+            
         with col3:
             학력 = st.multiselect(
                 "학력",
                 ("무관", "학사", "석사", "박사")
             )
             학력_dict = {"무관":0, "학사":1, "석사":2, "박사":3}
-            print('Printing 학력: ', 학력)
             if 학력:
                 학력 = 학력_dict[학력[0]]
-        
+            
+            가중치_학력 = st.slider('학력 가중치', min_value=1, max_value=10, \
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
+            
         
 
         with col4:
@@ -74,46 +81,27 @@ with st.container():
                 ('컴퓨터공학', '컴퓨터과학', '통계학', '응용통계학', '경영학', '데이터사이언스', '수학', '기계공학', '전자공학' )
             )
 
+            가중치_전공 = st.slider('기업 정보 가중치', min_value=1, max_value=10, \
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
+            
+
         with col5:
             스킬셋 = st.multiselect(
                 "스킬셋",
-                # ("C/C++", "Python", "AdobeXD", "반도체")
                 스킬셋리스트
             )
+            가중치_스킬셋 = st.slider('스킬셋 가중치', min_value=1, max_value=10, \
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
+            
         
         with col6:
             복지 = st.multiselect(
                 "복지",
-                # ('#야근없음','#유연근무','#주35시간', '#주4일근무','#육아휴직','#출산휴가','#리프레시휴가',
-                # '#성과급','#상여금','#연말보너스','#스톡옵션',
-                # '#수평적조직','#스타트업','#자율복장','#워크샵','#반려동물',
-                # '#조식제공','#중식제공','#석식제공','#시리얼','#식비','#음료','#맥주','#커피','#와인','#샐러드','#과일','#간식',
-                # '#사내카페','#사내식당','#주차','#수면실','#휴게실','#헬스장','#위워크','#수유실','#안마의자',
-                # '#어린이집','#보육시설','#생일선물','#결혼기념일','#대출지원',
-                # '#택시비','#차량지원','#원격근무','#셔틀버스','#기숙사','#사택','#재택근무',
-                # '#건강검진','#단체보험','#의료비','#운동비','#문화비','#동호회','#복지포인트',
-                # '#교육비','#직무교육','#세미나참가비','#컨퍼런스참가비','#자기계발','#도서구매비','#스터디지원','#어학교육','#해외연수',
-                # '#산업기능요원','#전문연구요원','#인공지능','#IoT','#핀테크','#푸드테크','#Macbook','#iMac','#노트북','#통신비')
                 복지리스트
             )
 
-        with col7:
-            가중치_세부직무 = st.slider('직무 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
-            가중치_경력 = st.slider('경력 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
-            가중치_학력 = st.slider('학력 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
-            가중치_전공 = st.slider('기업 정보 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
-            가중치_스킬셋 = st.slider('스킬셋 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
             가중치_복지 = st.slider('복지 가중치', min_value=1, max_value=10, \
-                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")
-
-        
-
-        
+                        value=None, step=None, format=None, key=None, help=None, on_change=None, args=None, kwargs=None,  disabled=False, label_visibility="visible")        
 
         submitted = st.form_submit_button("Search🔎")
 
@@ -142,29 +130,245 @@ with st.container():
     
     if 'overview_obj' in st.session_state:
         with st.container():
-            # my_info = st.session_state['overview_my_info']
-            # weights = st.session_state['overview_weights']
-
-            # overview = Overview(df, my_info, weights) 
             overview = st.session_state['overview_obj']
             df_with_score = overview.df                  
 
             ### Draw circles 
             cluster_data = overview.cluster_data
-            overview_view, detail_view = st.columns(2)
-
-            with overview_view:
+            col1, col2, col3 = st.columns((1, 0.7, 0.8))
+ 
+            with col1:
+                col1.subheader("Bubble")
                 makers = BubbleMaker()
                 bubbles = makers.gen_bubble(cluster_data)
                 fig, map_dict = makers.plot_bubbles(bubbles)
                 points = plotly_events(fig, )
                 if points:
-                    print('asdfsafds', points)
                     idx = points[0]['curveNumber']
-                    points[0]['cid'] = map_dict[idx]
+                    st.session_state['selected_cid'] = map_dict[idx]
+                    
 
-            with detail_view:
-                st.write('detail view')
+            with col2:
+                col2.subheader("Score Explanation view")
+                categories = ['세부직무','경력','학력','전공','스킬셋','복지']
+               
+                if 'selected_cid' in st.session_state:
+                    cid = st.session_state['selected_cid']
+                    for cluster in cluster_data:
+                        if cluster['cid'] == cid:
+                            data_cluster_member = cluster['c_members']
+                            
+
+                    data_cluster = df_with_score.loc[df_with_score['id'].isin(data_cluster_member)]
+                    
+                    st.session_state['data_cluster'] = data_cluster
+
+                    
+                    
+                    # 클러스터 직무적합도 기준별 점수 * 10
+                    
+                    c = list(data_cluster[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+
+                    #전체 직무적합도 기준별 점수
+
+                    
+                    o = list(df_with_score[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+
+                    fig = go.Figure()
+
+                    fig.add_trace(go.Scatterpolar(
+                        r=c,
+                        theta=categories,
+                        fill='toself',
+                        name='클러스터',
+                        hovertemplate = '<i>기준명</i>: %{theta}<br><i>적합도</i>: %{r}<br>'
+                    ))
+                    fig.add_trace(go.Scatterpolar(
+                        r=o,
+                        theta=categories,
+                        fill='toself',
+                        name='전체',
+                        hovertemplate = '<i>기준명</i>: %{theta}<br><i>적합도</i>: %{r}<br>'
+                    ))
+
+                    fig.update_layout(
+                        polar=dict(
+                            radialaxis=dict(
+                            visible=True,
+                            range=[0, 10]
+                        )),
+                        showlegend=False,
+                        width=800,
+                        height=400,
+                        margin=dict(l=40, r=60, b=40, t=0)
+                    )
+
+                    st.plotly_chart(fig)
+                else:
+                    data_cluster = df_with_score
+                    o = list(df_with_score[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatterpolar(
+                        r=o,
+                        theta=categories,
+                        fill='toself',
+                        name='전체',
+                        hovertemplate = '<i>기준명</i>: %{theta}<br><i>적합도</i>: %{r}<br>'
+                    ))
+
+                    fig.update_layout(
+                        polar=dict(
+                            radialaxis=dict(
+                            visible=True,
+                            range=[0, 10]
+                        )),
+                        showlegend=False,
+                        width=1200,
+                        height=400,
+                        margin=dict(l=20, r=20, b=20, t=20)
+                    )
+
+                    st.plotly_chart(fig)
+
+            with col3:
+                if 'keywords' not in st.session_state:
+                    st.session_state['keywords'] = set() 
+
+                col3.subheader("Feature Explanation View")
+                kw_cat = st.radio("어떤 특성의 핵심 키워드를 보고 싶으신가요?",('기술스택', '복지', '업종', '기업정보' ), horizontal=True)
+                
+                w_words = utils.word_count(data_cluster, "복지")
+                i_words = utils.word_count(data_cluster, "업종")
+                s_words = utils.word_count(data_cluster, "스킬셋")
+                c_words = utils.word_count(data_cluster, "기업정보")
+
+                # Tag
+                if kw_cat == '복지':
+                    return_obj = wordcloud.visualize(w_words, tooltip_data_fields={
+                        'text':'복지 종류', 'value':'관련 공고 수'
+                    }, per_word_coloring=False, width = 400, height = 350, key="복지", max_words= 25)
+
+                
+                # No tag
+                elif kw_cat == '업종':
+                    return_obj = wordcloud.visualize(i_words, tooltip_data_fields={
+                        'text':'업종', 'value':'관련 공고 수'
+                    }, per_word_coloring=False, width = 800, height = 500, key="업종")
+                
+                # No tag
+                elif kw_cat == '기술스택':
+                    return_obj = wordcloud.visualize(s_words, tooltip_data_fields={
+                        'text':'기술스택 종류', 'value':'관련 공고 수'
+                    }, per_word_coloring=False, width = 800, height = 500, key="기술스택")
+
+                # Tag
+                else: 
+                    return_obj = wordcloud.visualize(c_words, tooltip_data_fields={
+                        'text':'기업 이미지 및 규모', 'value':'관련 공고 수'
+                    }, per_word_coloring=False, width = 700, height = 400, key="기업정보")
+                
+                if return_obj != None and return_obj['clicked'] != None:
+                    tag = return_obj['clicked']['text']
+                    if tag in st.session_state['keywords']:
+                        st.session_state['keywords'].remove(tag)
+                
+                    else:
+                        st.session_state['keywords'].add(tag)
+
+                md = ""
+                for keyword in st.session_state['keywords']:
+                    md = md + f"* {keyword}\n"
+                my_md = st.markdown(md)
+
+                if st.button("리셋"):
+                    st.session_state['keywords'] = set()
+                    my_md.empty()
+
+                ###
+        
+        comp_cont = st.container()
+        with comp_cont:
+            full_comp_html = '''<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+                <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            '''
+            json_paths = glob.glob("./data/job_posting/json/*.json")
+            keywords = st.session_state['keywords']
+
+            for idx, path in enumerate(json_paths):
+                data = json.load(open(path, "r"))
+                tags = data.get("tags", [])
+                tags = set(map(lambda tag: tag.split("#")[1], tags))
+                
+
+                기술스택 = set(data.get("tools", []))
+                업종 = data.get("industry", None)
+
+                inter = tags & keywords
+                inter1 = 기술스택 & keywords
+                if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
+                    name = data["company_name"]
+                    thumb_img = data["title_thumb_img"]
+                    main_tasks = data["main_tasks"]
+                    is_newbie = data["is_newbie"]
+                    location = data["location"]
+                    req = data["requirements"]
+                    
+                    sub_categories = data["sub_categories"]
+
+                    tasks_html = ''
+                    for task in main_tasks.split("\n"):
+                        if len(task.strip()) == 0:
+                            continue       
+                        tasks_html = tasks_html + f'<p>{task}</p>'
+
+                    req_html = ''
+                    for r in req.split("\n"):
+                        if len(r.strip()) == 0:
+                            continue
+                        req_html = req_html + f'<p>{r}</p>'
+
+                    content_html = f'''
+                    <div style="display: flex; margin: 10px 10px 10px 10px;">
+                        <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
+                        <div style="margin-left: 20px;">
+                            <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
+                            {tasks_html}
+                            <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
+                            {req_html}
+                        </div>
+                    </div>
+                    '''
+                
+                    full_comp_html += f'''
+                    <div id="accordion">
+                        <div class="card">
+                        <div style="display:flex;" class="card-header" id="headingOne">
+                            <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
+                            <div>
+                            <div style="margin: 0 0 0 20px;">
+                                <div style="display: flex;">
+                                <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
+                                <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
+                                    자세히 보기
+                                </button>
+                                </div>
+                                <p>{",".join(sub_categories)}</p> 
+                                <p>{' '.join(data.get("tags", []))}</p>
+                            </div>
+                            </div>
+                        </div>
+                        <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                            {content_html}
+                        </div>
+                        </div>
+                    </div>'''
+
+            components.html(full_comp_html,
+                width=1350,
+                height=1200,
+                scrolling=True
+            )
 
 
     # if submitted:
