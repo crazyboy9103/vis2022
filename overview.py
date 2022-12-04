@@ -10,6 +10,7 @@ import pickle
 from sklearn.cluster import KMeans
 
 from utils import * 
+from plot_packed_bbchart_ex import * 
 
 
 ### 공고 데이터 불러오기 
@@ -99,6 +100,15 @@ for i in range(7):
             df_cluster = df.loc[df['cluster']==j, :]
             cluster = {'score':i, 'cid':j, 'c_members':list(wanted_df_modified.iloc[df_cluster.index, 0]), 'number':len(df_cluster)}
             cluster_data.append(cluster)
+
+
+
+### Draw circles 
+makers = BubbleMaker()
+bubbles = makers.gen_bubble(cluster_data)
+# pp(bubbles)
+fig = makers.plot_bubbles(bubbles)
+fig.show()
 
 # # Data processing 
 # latlon = pd.read_csv('data/Seoul_latlong_utf8.csv', encoding='cp949')  ## 서울 위경도 데이터
