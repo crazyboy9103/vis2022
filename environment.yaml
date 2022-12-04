@@ -104,4 +104,4 @@ dependencies:
     - widgetsnbextension==4.0.3
     - wordcloud==1.8.2.2
     - zipp==3.10.0
-prefix: H:\anaconda3\envs\viz
+prefix: C:\Users\david\miniconda3\envs\viz
