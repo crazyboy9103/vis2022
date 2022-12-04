@@ -128,7 +128,7 @@ with st.container():
 
     elif kw_cat == '기술스택':
 
-      words = utils.word_count(data_cluster, "기술스택")
+      words = utils.word_count(data_cluster, "스킬셋")
       return_obj = wordcloud.visualize(words, tooltip_data_fields={
           'text':'기술스택 종류', 'value':'관련 공고 수'
       }, per_word_coloring=False, width = 800, height = 500)
