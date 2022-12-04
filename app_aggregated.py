@@ -135,6 +135,7 @@ with st.container():
 
             ### Draw circles 
             cluster_data = overview.cluster_data
+            # st.write(cluster_data)
             col1, col2, col3 = st.columns((1, 0.7, 0.8))
  
             with col1:
@@ -365,7 +366,7 @@ with st.container():
                     </div>'''
 
             components.html(full_comp_html,
-                width=1350,
+                width=1560,
                 height=1200,
                 scrolling=True
             )

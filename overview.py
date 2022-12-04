@@ -78,7 +78,8 @@ class Overview:
             self.df[col] = self.df[col].apply(lambda x: x* self.weights[col] )
 
         # 최종 Fit score = Sum(weight * similarity)
-        self.df['Fit_score'] = self.df.iloc[:, 1:].sum(axis = 1)
+        self.df['Fit_score'] = self.df[['경력_score','학력_score', '전공_score', '스킬셋_score', '복지_score', '세부직무_score']].sum(axis = 1)
+        # print(f"fit score {min(self.df['Fit_score'])}, {max(self.df['Fit_score'])}")
 
     
     ### Clustering 
