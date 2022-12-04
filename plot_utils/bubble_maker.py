@@ -5,6 +5,7 @@ from pprint import pprint as pp
 import circlify as circ
 from collections import defaultdict
 import math
+import numpy as np
 
 class BubbleMaker:
   palette = sns.color_palette("GnBu_d",10).as_hex()
@@ -78,26 +79,54 @@ class BubbleMaker:
     self.fig.update_layout(height=fig_width*height/width)
 
     min_x = -min_x
-
+    map_dict = dict()
     # padding
     if padding:
       self.padding = padding
 
     # print(bubbles)
     
-    points = [go.layout.Shape(x0=circle.x-(circle.r-self.padding)+min_x,
-                          y0=circle.y-(circle.r-self.padding), 
-                          x1=circle.x+(circle.r-self.padding)+min_x, 
-                          y1=circle.y+(circle.r-self.padding), 
-                          fillcolor=circle.ex['color'], 
-                          line_color=circle.ex['color'],
-                          **self.default_bubble_kwargs) for idx, circle in enumerate(bubbles) if circle.level==2]
-
-    self.fig.update_layout(shapes=points)
+    # points = [go.layout.Shape(x0=circle.x-(circle.r-self.padding)+min_x,
+    #                       y0=circle.y-(circle.r-self.padding), 
+    #                       x1=circle.x+(circle.r-self.padding)+min_x, 
+    #                       y1=circle.y+(circle.r-self.padding), 
+    #                       fillcolor=circle.ex['color'], 
+    #                       line_color=circle.ex['color'],
+    #                       **self.default_bubble_kwargs) for idx, circle in enumerate(bubbles) if circle.level==2]
+    # self.fig.update_layout(shapes=points)
     
+    i=0
+    for _, circle in enumerate(bubbles):
+      if circle.level == 2:
+        self.fig.add_shape(type="circle",
+          xref="x", yref="y",
+          x0=circle.x-(circle.r-self.padding)+min_x,
+          y0=circle.y-(circle.r-self.padding), 
+          x1=circle.x+(circle.r-self.padding)+min_x, 
+          y1=circle.y+(circle.r-self.padding), 
+          opacity=1,
+          fillcolor=circle.ex['color'], 
+          line_color=circle.ex['color'])
+
+        t = np.arange(0, 2 * np.pi, 0.01)
+        x = (circle.r - self.padding) * np.cos(t) + circle.x+ min_x
+        y = (circle.r - self.padding) * np.sin(t) + circle.y
+        scatter = go.Scatter (
+            x=x.tolist(),
+            y=y.tolist(),
+            fill='toself',
+            mode='lines',
+            name=f'{i}',
+            text=f'{circle.ex["id"]}',
+            opacity = 0,
+        )
+        map_dict[i] = circle.ex['id']
+        i += 1
+        self.fig.add_trace ( scatter)
+
     self.fig.update_xaxes(range=[0, width])
     self.fig.update_yaxes(range=[-height/2, height/2 ])
 
     self.fig.update_xaxes(visible=False)
     self.fig.update_yaxes(visible=False)
-    return self.fig
+    return self.fig, map_dict

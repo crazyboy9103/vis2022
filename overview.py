@@ -41,7 +41,7 @@ class Overview:
         self.my_info = my_info
         self.weights = weights
         self.cal_score()  # job posting data에 score 데이터 추가 
-        self.cluster_data = self.clustering(self.df)  # 클러스터링 시각화 위한 데이터 (dict)
+        self.cluster_data = self.clustering()  # 클러스터링 시각화 위한 데이터 (dict)
 
     ### Fit score 계산 
     # 1) 경력, 학력
@@ -89,24 +89,26 @@ class Overview:
         for i in range(7):
             df = self.df.loc[self.df['Fit_score']==i, ['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']]
             
-            
-            if 0<len(df)<=100:
-                N_CLUSTERS = 2
-            elif 100 <len(df)<=500:
-                N_CLUSTERS = 4
+            if len(df) > 0:
+                if 0<len(df)<=100:
+                    N_CLUSTERS = 2
+                elif 100 <len(df)<=500:
+                    N_CLUSTERS = 4    
+                elif 500 <len(df) <= 1000:
+                    N_CLUSTERS = 6
+                else:
+                    N_CLUSTERS = 8
                 
-            elif 500 <len(df) <= 1000:
-                N_CLUSTERS = 6
-                
-            kmeans = KMeans(n_clusters=N_CLUSTERS).fit(df)
-            df['cluster'] = kmeans.labels_
-            # 필요하면 넣기 
-        #         wanted_df_modified.iloc[df.index, -1] = kmeans.labels_
+                    
+                kmeans = KMeans(n_clusters=N_CLUSTERS).fit(df)
+                df['cluster'] = kmeans.labels_
+                # 필요하면 넣기 
+            #         wanted_df_modified.iloc[df.index, -1] = kmeans.labels_
 
-            for j in range(max(kmeans.labels_)+1):
-                df_cluster = df.loc[df['cluster']==j, :]
-                cluster = {'score':i, 'cid':f'{i}-{j-1}', 'c_members':list(self.df.iloc[df_cluster.index, 0]), 'number':len(df_cluster)}
-                cluster_data.append(cluster)
+                for j in range(max(kmeans.labels_)+1):
+                    df_cluster = df.loc[df['cluster']==j, :]
+                    cluster = {'score':i, 'cid':f'{i}-{j-1}', 'c_members':list(self.df.iloc[df_cluster.index, 0]), 'number':len(df_cluster)}
+                    cluster_data.append(cluster)
 
         return cluster_data 
 

@@ -10,6 +10,8 @@ from IPython.display import display
 from utils import * 
 import folium
 from streamlit_folium import st_folium
+from streamlit_plotly_events import plotly_events
+
 import pickle
 
 from plot_packed_bbchart_ex import * 
@@ -59,7 +61,9 @@ with st.container():
                 ("무관", "학사", "석사", "박사")
             )
             학력_dict = {"무관":0, "학사":1, "석사":2, "박사":3}
-            학력 = 학력_dict[학력]
+            print('Printing 학력: ', 학력)
+            if 학력:
+                학력 = 학력_dict[학력[0]]
         
         
 
@@ -142,15 +146,21 @@ with st.container():
                 with overview:
                     
                     # Calculate Fit score 
-                    df_with_score = Overview(df, my_info, weights)                   
+                    overview = Overview(df, my_info, weights)   
+                    df_with_score = overview.df                  
 
                     ### Draw circles 
-                    cluster_data = Overview.cluster_data
+                    cluster_data = overview.cluster_data
                     
                     makers = BubbleMaker()
                     bubbles = makers.gen_bubble(cluster_data)
-                    fig = makers.plot_bubbles(bubbles)
+                    fig, map_dict = makers.plot_bubbles(bubbles)
+
                     # fig.show()
+                    points = plotly_events(fig, )
+                    if points:
+                        idx = points[0]['curveNumber']
+                        points[0]['cid'] = map_dict[idx]
                    
                 with detail_view:
                     st.write('detail view')
