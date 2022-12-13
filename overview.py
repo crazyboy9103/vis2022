@@ -10,7 +10,7 @@ import pickle
 from sklearn.cluster import KMeans
 
 from utils import * 
-from plot_packed_bbchart_ex import * 
+# from plot_packed_bbchart_ex import * 
 
 
 ### 공고 데이터 불러오기 

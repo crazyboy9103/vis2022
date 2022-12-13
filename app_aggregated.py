@@ -17,8 +17,10 @@ from streamlit_folium import st_folium
 from streamlit_plotly_events import plotly_events
 import plotly.graph_objects as go
 import pickle
+from PIL import Image
+from plot_utils.bubble_maker import BubbleMaker as BM
 
-from plot_packed_bbchart_ex import * 
+# from plot_packed_bbchart_ex import * 
 from overview import * 
 
 
@@ -43,8 +45,8 @@ with st.container():
     filtered_data = None
 
     with st.form("my_form"):
-        st.header("Search")
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        st.header("Profile")
+        col1, col2, col3, col4, col5, col6 = st.columns((1,0.7,0.8,1,1,1))
         with col1:
             세부직무 = st.multiselect(
                 "세부 직무",
@@ -127,7 +129,7 @@ with st.container():
         st.session_state['overview_obj'] = overview
         
 
-    
+    image = Image.open('colorbar.png')
     if 'overview_obj' in st.session_state:
         with st.container():
             overview = st.session_state['overview_obj']
@@ -136,22 +138,37 @@ with st.container():
             ### Draw circles 
             cluster_data = overview.cluster_data
             # st.write(cluster_data)
-            col1, col2, col3 = st.columns((1, 0.7, 0.8))
- 
+            col1, col2, col3, col4 = st.columns((0.8, 0.7, 1, 1.7), gap="medium")
+
             with col1:
-                col1.subheader("Bubble")
-                makers = BubbleMaker()
+                col1.subheader("Job Clusters")
+                makers = BM()
+                st.image(image)
                 bubbles = makers.gen_bubble(cluster_data)
-                fig, map_dict = makers.plot_bubbles(bubbles)
+                # pop_a = mpatches.Patch(color='#5DC83F', label='Population Dataset 1')
+                # pop_b = mpatches.Patch(color='#CE5D45', label='Population Dataset 2')
+                # fig.legend(handles=[pop_a,pop_b])
+                fig = go.Figure()
+                # fig = st.plotly_chart(fig, use_container_width=True)
+                fig.update_layout(width=270)
+                print('width:',fig.layout.width)
+                fig.update_layout(showlegend=True)
+                if 'selected_cid' not in st.session_state:
+                    st.session_state['selected_cid'] = -1
+                cid = st.session_state['selected_cid']
+                fig, map_dict = makers.plot_bubbles(bubbles, fig=fig, selected=cid)
+                print(cid,cid)
                 points = plotly_events(fig, )
                 if points:
                     idx = points[0]['curveNumber']
                     st.session_state['selected_cid'] = map_dict[idx]
-                    
+                    # fig, map_dict = makers.plot_bubbles(bubbles, fig=fig, selected=cid)
+                # fig.update_layout(showlegend=True)
+                
 
             with col2:
-                col2.subheader("Score Explanation view")
-                categories = ['세부직무','경력','학력','전공','스킬셋','복지']
+                col2.subheader("Fit Score")
+                categories = ['경력','세부직무','학력','전공','스킬셋','복지']
                
                 if 'selected_cid' in st.session_state:
                     cid = st.session_state['selected_cid']
@@ -166,11 +183,11 @@ with st.container():
                     st.session_state['cluster_member'] = data_cluster_member
 
                     # 클러스터 직무적합도 기준별 점수 * 10
-                    c = list(data_cluster[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+                    c = list(data_cluster[['경력_score','세부직무_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
                     c = list(map(lambda x: min(10, x), c))
                     #전체 직무적합도 기준별 점수          
-                    o = list(df_with_score[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
-                    o = list(map(lambda x: min(10, x), o))
+                    o = list(df_with_score[['경력_score','세부직무_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+                    # o = list(map(lambda x: min(10, x), o))
                     fig = go.Figure()
 
                     fig.add_trace(go.Scatterpolar(
@@ -194,15 +211,17 @@ with st.container():
                             visible=True,
                             range=[0, 10]
                         )),
-                        showlegend=False,
-                        width=800,
-                        height=400,
-                        margin=dict(l=40, r=60, b=40, t=0)
+                        showlegend=True,
+                        legend=dict(orientation="h", yanchor="top", y=1.1),
+                        # showlegend=False,
+                        width=220,
+                        height=340,
+                        margin=dict(l=30, r=30, t=20, b=0)
                     )
                     st.plotly_chart(fig)
                 else:
                     data_cluster = df_with_score
-                    o = list(df_with_score[['세부직무_score','경력_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
+                    o = list(df_with_score[['경력_score','세부직무_score','학력_score','전공_score','스킬셋_score','복지_score']].mean()*10)
                     fig = go.Figure()
                     fig.add_trace(go.Scatterpolar(
                         r=o,
@@ -218,10 +237,12 @@ with st.container():
                             visible=True,
                             range=[0, 10]
                         )),
-                        showlegend=False,
-                        width=800,
-                        height=400,
-                        margin=dict(l=40, r=60, b=40, t=0)
+                        showlegend=True,
+                        legend=dict(orientation="h"),
+                        # showlegend=False,
+                        width=220,
+                        height=340,
+                        margin=dict(l=30, r=30, t=20, b=0)
                     )
                     st.plotly_chart(fig)
 
@@ -229,38 +250,40 @@ with st.container():
                 if 'keywords' not in st.session_state:
                     st.session_state['keywords'] = set() 
 
-                col3.subheader("Feature Explanation View")
+                col3.subheader("Hot Kewords")
                 kw_cat = st.radio("어떤 특성의 핵심 키워드를 보고 싶으신가요?",('기술스택', '복지', '업종', '기업정보' ), horizontal=True)
                 
                 w_words = utils.word_count(data_cluster, "복지")
                 i_words = utils.word_count(data_cluster, "업종")
                 s_words = utils.word_count(data_cluster, "스킬셋")
                 c_words = utils.word_count(data_cluster, "기업정보")
-
+                
+                wc_width = 310#400
+                wc_height = 230#300
                 # Tag
                 if kw_cat == '복지':
                     return_obj = wordcloud.visualize(w_words, tooltip_data_fields={
                         'text':'복지 종류', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 400, height = 350, key="복지", max_words= 25)
+                    }, per_word_coloring=False, width = wc_width, height = wc_height, key="복지", max_words= 25)
 
                 
                 # No tag
                 elif kw_cat == '업종':
                     return_obj = wordcloud.visualize(i_words, tooltip_data_fields={
                         'text':'업종', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 400, height = 350, key="업종", max_words= 25)
+                    }, per_word_coloring=False, width = wc_width, height = wc_height, key="업종", max_words= 25)
                 
                 # No tag
                 elif kw_cat == '기술스택':
                     return_obj = wordcloud.visualize(s_words, tooltip_data_fields={
                         'text':'기술스택 종류', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 400, height = 350, key="기술스택", max_words= 25)
+                    }, per_word_coloring=False, width = wc_width, height = wc_height, key="기술스택", max_words= 25)
 
                 # Tag
                 else: 
                     return_obj = wordcloud.visualize(c_words, tooltip_data_fields={
                         'text':'기업 이미지 및 규모', 'value':'관련 공고 수'
-                    }, per_word_coloring=False, width = 400, height = 350, key="기업정보", max_words= 25)
+                    }, per_word_coloring=False, width = wc_width, height = wc_height, key="기업정보", max_words= 25)
                 
                 if return_obj != None:
                     if return_obj['clicked'] != None and return_obj['hovered'] != None:
@@ -274,166 +297,166 @@ with st.container():
                 for keyword in st.session_state['keywords']:
                     md = md + f"* {keyword}\n"
                 my_md = st.markdown(md)
-
-                if st.button("리셋"):
-                    st.session_state['keywords'] = set()
-                    my_md.empty()
+                # my_md = st.markdown(" \n\n")
+                # if st.button("리셋"):
+                #     st.session_state['keywords'] = set()
+                #     my_md.empty()
 
                 ###
         
-        comp_cont = st.container()
-        with comp_cont:
-            full_comp_html = '''<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-                <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-            '''
-            json_paths = glob.glob("./data/job_posting/json/*.json")
-            keywords = st.session_state['keywords']
-            if 'cluster_member' in st.session_state:
-                for idx, cid in enumerate(st.session_state['cluster_member']):
-                    path = f'./data/job_posting/json/{cid}.json'
-                    data = json.load(open(path, "r"))
-                    tags = data.get("tags", [])
-                    tags = set(map(lambda tag: tag.split("#")[1], tags))
-                    
-
-                    기술스택 = set(data.get("tools", []))
-                    업종 = data.get("industry", None)
-
-                    inter = tags & keywords
-                    inter1 = 기술스택 & keywords
-                    if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
-                        name = data["company_name"]
-                        thumb_img = data["title_thumb_img"]
-                        main_tasks = data["main_tasks"]
-                        is_newbie = data["is_newbie"]
-                        location = data["location"]
-                        req = data["requirements"]
+        # comp_cont = st.container()
+            with col4:
+                full_comp_html = '''<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+                    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+                '''
+                json_paths = glob.glob("./data/job_posting/json/*.json")
+                keywords = st.session_state['keywords']
+                if 'cluster_member' in st.session_state:
+                    for idx, cid in enumerate(st.session_state['cluster_member']):
+                        path = f'./data/job_posting/json/{cid}.json'
+                        data = json.load(open(path, "r"))
+                        tags = data.get("tags", [])
+                        tags = set(map(lambda tag: tag.split("#")[1], tags))
                         
-                        sub_categories = data["sub_categories"]
 
-                        tasks_html = ''
-                        for task in main_tasks.split("\n"):
-                            if len(task.strip()) == 0:
-                                continue       
-                            tasks_html = tasks_html + f'<p>{task}</p>'
+                        기술스택 = set(data.get("tools", []))
+                        업종 = data.get("industry", None)
 
-                        req_html = ''
-                        for r in req.split("\n"):
-                            if len(r.strip()) == 0:
-                                continue
-                            req_html = req_html + f'<p>{r}</p>'
+                        inter = tags & keywords
+                        inter1 = 기술스택 & keywords
+                        if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
+                            name = data["company_name"]
+                            thumb_img = data["title_thumb_img"]
+                            main_tasks = data["main_tasks"]
+                            is_newbie = data["is_newbie"]
+                            location = data["location"]
+                            req = data["requirements"]
+                            
+                            sub_categories = data["sub_categories"]
 
-                        content_html = f'''
-                        <div style="display: flex; margin: 10px 10px 10px 10px;">
-                            <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
-                            <div style="margin-left: 20px;">
-                                <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
-                                {tasks_html}
-                                <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
-                                {req_html}
-                            </div>
-                        </div>
-                        '''
-                    
-                        full_comp_html += f'''
-                        <div id="accordion">
-                            <div class="card">
-                            <div style="display:flex;" class="card-header" id="headingOne">
-                                <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
-                                <div>
-                                <div style="margin: 0 0 0 20px;">
-                                    <div style="display: flex;">
-                                    <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
-                                    <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
-                                        자세히 보기
-                                    </button>
-                                    </div>
-                                    <p>{",".join(sub_categories)}</p> 
-                                    <p>{' '.join(data.get("tags", []))}</p>
-                                </div>
+                            tasks_html = ''
+                            for task in main_tasks.split("\n"):
+                                if len(task.strip()) == 0:
+                                    continue       
+                                tasks_html = tasks_html + f'<p>{task}</p>'
+
+                            req_html = ''
+                            for r in req.split("\n"):
+                                if len(r.strip()) == 0:
+                                    continue
+                                req_html = req_html + f'<p>{r}</p>'
+
+                            content_html = f'''
+                            <div style="display: flex; margin: 10px 10px 10px 10px;">
+                                <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
+                                <div style="margin-left: 20px;">
+                                    <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
+                                    {tasks_html}
+                                    <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
+                                    {req_html}
                                 </div>
                             </div>
-                            <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                                {content_html}
-                            </div>
-                            </div>
-                        </div>'''
-            else:
-                for idx, path in enumerate(json_paths):
-                    data = json.load(open(path, "r"))
-                    tags = data.get("tags", [])
-                    tags = set(map(lambda tag: tag.split("#")[1], tags))
-                    
-
-                    기술스택 = set(data.get("tools", []))
-                    업종 = data.get("industry", None)
-
-                    inter = tags & keywords
-                    inter1 = 기술스택 & keywords
-                    if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
-                        name = data["company_name"]
-                        thumb_img = data["title_thumb_img"]
-                        main_tasks = data["main_tasks"]
-                        is_newbie = data["is_newbie"]
-                        location = data["location"]
-                        req = data["requirements"]
+                            '''
                         
-                        sub_categories = data["sub_categories"]
-
-                        tasks_html = ''
-                        for task in main_tasks.split("\n"):
-                            if len(task.strip()) == 0:
-                                continue       
-                            tasks_html = tasks_html + f'<p>{task}</p>'
-
-                        req_html = ''
-                        for r in req.split("\n"):
-                            if len(r.strip()) == 0:
-                                continue
-                            req_html = req_html + f'<p>{r}</p>'
-
-                        content_html = f'''
-                        <div style="display: flex; margin: 10px 10px 10px 10px;">
-                            <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
-                            <div style="margin-left: 20px;">
-                                <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
-                                {tasks_html}
-                                <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
-                                {req_html}
-                            </div>
-                        </div>
-                        '''
-                    
-                        full_comp_html += f'''
-                        <div id="accordion">
-                            <div class="card">
-                            <div style="display:flex;" class="card-header" id="headingOne">
-                                <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
-                                <div>
-                                <div style="margin: 0 0 0 20px;">
-                                    <div style="display: flex;">
-                                    <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
-                                    <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
-                                        자세히 보기
-                                    </button>
+                            full_comp_html += f'''
+                            <div id="accordion">
+                                <div class="card">
+                                <div style="display:flex;" class="card-header" id="headingOne">
+                                    <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
+                                    <div>
+                                    <div style="margin: 0 0 0 20px;">
+                                        <div style="display: flex;">
+                                        <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
+                                        <button class="btn btn-link" style="width:30px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
+                                            자세히 보기
+                                        </button>
+                                        </div>
+                                        <p>{",".join(sub_categories)}</p> 
+                                        <p>{' '.join(data.get("tags", []))}</p>
                                     </div>
-                                    <p>{",".join(sub_categories)}</p> 
-                                    <p>{' '.join(data.get("tags", []))}</p>
+                                    </div>
+                                </div>
+                                <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                                    {content_html}
                                 </div>
                                 </div>
-                            </div>
-                            <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-                                {content_html}
-                            </div>
-                            </div>
-                        </div>'''
+                            </div>'''
+                else:
+                    for idx, path in enumerate(json_paths):
+                        data = json.load(open(path, "r"))
+                        tags = data.get("tags", [])
+                        tags = set(map(lambda tag: tag.split("#")[1], tags))
+                        
 
-            components.html(full_comp_html,
-                width=1400,
-                height=1200,
-                scrolling=True
-            )
+                        기술스택 = set(data.get("tools", []))
+                        업종 = data.get("industry", None)
+
+                        inter = tags & keywords
+                        inter1 = 기술스택 & keywords
+                        if len(inter) > 0 or len(inter1) > 0 or 업종 in keywords:
+                            name = data["company_name"]
+                            thumb_img = data["title_thumb_img"]
+                            main_tasks = data["main_tasks"]
+                            is_newbie = data["is_newbie"]
+                            location = data["location"]
+                            req = data["requirements"]
+                            
+                            sub_categories = data["sub_categories"]
+
+                            tasks_html = ''
+                            for task in main_tasks.split("\n"):
+                                if len(task.strip()) == 0:
+                                    continue       
+                                tasks_html = tasks_html + f'<p>{task}</p>'
+
+                            req_html = ''
+                            for r in req.split("\n"):
+                                if len(r.strip()) == 0:
+                                    continue
+                                req_html = req_html + f'<p>{r}</p>'
+
+                            content_html = f'''
+                            <div style="display: flex; margin: 10px 10px 10px 10px;">
+                                <img style="width: 300px; height: 300px;" src="{thumb_img}"/>
+                                <div style="margin-left: 20px;">
+                                    <p style="text-decoration: underline; font-weight:bold;">주요업무</p>
+                                    {tasks_html}
+                                    <p style="text-decoration: underline; font-weight:bold;">자격요건</p>
+                                    {req_html}
+                                </div>
+                            </div>
+                            '''
+                        
+                            full_comp_html += f'''
+                            <div id="accordion">
+                                <div class="card">
+                                <div style="display:flex;" class="card-header" id="headingOne">
+                                    <img style="width: 150px; height: 150px; align-self: center;" src="{thumb_img}"/>
+                                    <div>
+                                    <div style="margin: 0 0 0 20px;">
+                                        <div style="display: flex;">
+                                        <p style="text-decoration: underline; font-weight: bold; font-size:20px;">{name}</p> 
+                                        <button class="btn btn-link" style="width:10px; height:10px;" data-toggle="collapse" data-target="#collapse{idx}" aria-expanded="true" aria-controls="collapse{idx}">
+                                            자세히 보기
+                                        </button>
+                                        </div>
+                                        <p>{",".join(sub_categories)}</p> 
+                                        <p>{' '.join(data.get("tags", []))}</p>
+                                    </div>
+                                    </div>
+                                </div>
+                                <div id="collapse{idx}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                                    {content_html}
+                                </div>
+                                </div>
+                            </div>'''
+
+                components.html(full_comp_html,
+                    # width=1400,
+                    height=420,
+                    scrolling=True
+                )
 
 
     # if submitted:

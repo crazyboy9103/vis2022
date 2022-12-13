@@ -8,7 +8,7 @@ import math
 import numpy as np
 
 class BubbleMaker:
-  palette = sns.color_palette("GnBu_d",10).as_hex()
+  palette = sns.color_palette("GnBu_d",7).as_hex()
   default_bubble_kwargs = {'type': 'circle', 'xref': 'x', 'yref': 'y' }
   padding = 0.01
   
@@ -55,8 +55,15 @@ class BubbleMaker:
     return bubbles
   
   #draw packed bubble chart as plotly fig
-  def plot_bubbles(self, bubbles, padding=None, fig=None):
-    
+  def plot_bubbles(self, bubbles, padding=None, fig=None, selected=None):
+    print('########cid:',selected)
+    print('########cid:',selected)
+    print('########cid:',selected)
+    print('########cid:',selected)
+    print('########cid:',selected)
+    print('########cid:',selected)
+    print('########cid:',selected)
+
     if fig:
       self.fig = fig
     elif not self.fig:
@@ -96,6 +103,11 @@ class BubbleMaker:
     # self.fig.update_layout(shapes=points)
     
     i=0
+    def get_preesent_color(circle, selected):
+      if selected==circle.ex['id']:
+        return '#000000'
+      else:
+        return circle.ex['color']
     for _, circle in enumerate(bubbles):
       if circle.level == 2:
         self.fig.add_shape(type="circle",
@@ -106,7 +118,7 @@ class BubbleMaker:
           y1=circle.y+(circle.r-self.padding), 
           opacity=1,
           fillcolor=circle.ex['color'], 
-          line_color=circle.ex['color'])
+          line_color= get_preesent_color(circle, selected))
 
         t = np.arange(0, 2 * np.pi, 0.01)
         x = (circle.r - self.padding) * np.cos(t) + circle.x+ min_x
@@ -132,3 +144,5 @@ class BubbleMaker:
 
     self.fig.update_layout(showlegend=False)
     return self.fig, map_dict
+
+
